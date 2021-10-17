@@ -11,9 +11,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-/*  Declare Windows procedure  */
+///*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
-
+//fef
 /*  Make the class name into a global variable  */
 TCHAR szClassName[] = _T("CodeBlocksWindowsApp");
 

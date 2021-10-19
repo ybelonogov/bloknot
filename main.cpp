@@ -10,7 +10,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+//typedef struct tagPAINTSTRUCT
+//{
+//    HDC hdc;
+//    BOOL fErase;
+//    RECT rcPaint;
+//    BOOL fRestore;
+//    BOOL fIncUpdate;
+//    BYTE rgbReserved[32];
+//} PAINTSTRUCT;
 ///*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 //fef
@@ -71,6 +79,8 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
     /* Make the window visible on the screen */
     ShowWindow(hwnd, nCmdShow);
 
+
+
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage(&messages, NULL, 0, 0)) {
         /* Translate virtual-key messages into character messages */
@@ -87,9 +97,9 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
 /*  This function is called by the Windows function DispatchMessage()  */
 typedef struct data {
     int Size;
-    int lenCount;
-    int maxRowLen;
-    int countRows;
+    int lenStings [1000];
+    int maxRowLen=40;
+    int countStrings;
     char *text;
     int sizeX;
 
@@ -119,35 +129,71 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             fileSize = ftell(myFile);
             fseek(myFile, 0, SEEK_SET);
             myData.text = (char *) malloc(fileSize * sizeof(char));
-            if (myData.text == NULL)
+
+            if (myData.text == NULL) {
+
                 return 1;
+            }
             fread(myData.text, sizeof(char), fileSize, myFile);
             myData.text[fileSize - 1] = '\0';
-            fclose(myFile);
+            int prevI=0;
             myData.Size = fileSize;
-            myData.maxRowLen = 10;
+            myData.countStrings++;
+            for (int i=0; i<myData.Size; i++) {
+                if (myData.text[i] == '\n'){
+                    myData.lenStings[myData.countStrings] = i - prevI;
+                    myData.countStrings++;
+                    prevI=i;
+                }
+            }
+//          std::cout<<myData.text[i];
+            fclose(myFile);
+
+//            myData.maxRowLen = 10;
+            std::cerr<<"1";
+            for (int i=0; i<myData.Size; i++)
+                std::cout<<myData.text[i];
+            for (int i=0; i<myData.countStrings; i++)
+                std::cout<<myData.lenStings[i]<<std::endl;
+
         }
             break;
         case WM_PAINT: {
             hdc = BeginPaint(hwnd, &ps);
-            //TextOut(hdc, 10, 40, arr, strlen(arr));
+            BeginPaint(hwnd,&ps);
+//            TextOut(hdc, 10, 40, myData.text,myData.Size);
 
             char *buffer = (char *) malloc(sizeof(char) * myData.maxRowLen);
-
-            myData.countRows = 0;
-
-            int i = 0;
-            while (i < myData.Size) {
-                int j;
-                for (j = 0; j < myData.maxRowLen && *(myData.text + i + j) != '\n'; j++) {
-                    buffer[j] = *(myData.text + i + j);
+//            char *buffer = (char *) malloc(sizeof(char) * 35);
+//            std::cerr<<myData.countStrings;
+            int num=0;
+            for (int i=0;i<myData.countStrings;i++){
+                for (int j=0;j<myData.lenStings[i];j++){
+                    buffer[j] = *(myData.text +num);
+                    std::cout<<buffer[j];
+                    num++;
                 }
-                buffer[j] = '\0';
-                TextOut(hdc, myData.Size, 40 + 20 * myData.countRows, buffer, strlen(buffer));
-                i += j;
-                myData.countRows++;
+                std::cout<<std::endl;
+//                for ()
+                std::cerr<<std::endl<<myData.lenStings[i]<<" "<<i;
+                TextOut(hdc, 10 , -10 + 20 * i, buffer, myData.lenStings[i]);
             }
-            //HBRUSH brush = CreateSolidBrush(RGB(255, 0 ,0));
+
+//            int i = 0;
+//
+//            while (i < myData.Size) {
+//                int j;
+//                for (j = 0; j < myData.maxRowLen;j++){ //&& *(myData.text + i + j) != '\n'; j++) {
+//                    buffer[j] = *(myData.text + i + j);
+//                }
+//                buffer[j] = '\0';
+//                std::cerr<<std::endl<<j<<" "<<i;
+//                TextOut(hdc, myData.Size, 40 + 20 * myData.countStrings, buffer, j + 1);
+//                i += j;
+//                myData.countStrings++;
+//            }
+            std::cerr<<std::endl<<myData.countStrings;
+//            HBRUSH brush = CreateSolidBrush(RGB(255, 0 ,0));
             //SetTextAlign(hdc, TA_LEFT, TA_TOP);
             EndPaint(hwnd, &ps);
         }

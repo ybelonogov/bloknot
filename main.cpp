@@ -1,4 +1,5 @@
 #include <iostream>
+
 #if defined(UNICODE) && !defined(_UNICODE)
 #define _UNICODE
 #elif defined(_UNICODE) && !defined(UNICODE)
@@ -10,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 //typedef struct tagPAINTSTRUCT
 //{
 //    HDC hdc;
@@ -55,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
     wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
-
+//    wincl.
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx(&wincl))
         return 0;
@@ -97,8 +99,8 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
 /*  This function is called by the Windows function DispatchMessage()  */
 typedef struct data {
     int Size;
-    int lenStings [1000];
-    int maxRowLen=40;
+    int lenStings[1000];
+    int maxRowLen = 40;
     int countStrings;
     char *text;
     int sizeX;
@@ -110,16 +112,20 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     static char *arr = NULL;
     HDC hdc;
     PAINTSTRUCT ps;
-    HFONT font = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
-
+//    HFONT font = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
+    static int iVscrollPos, cxClient, cyClient, cyChar;
     switch (message)                  /* handle the messages */
     {
+        case WM_SIZE:
+            cxClient = LOWORD(lParam);
+            cyClient = HIWORD(lParam);
+            return 0;
         case WM_DESTROY:
             free(arr);
             PostQuitMessage(0);/* send a WM_QUIT to the message queue */
             break;
         case WM_CREATE: {
-            //myData = (DATA*)malloc(sizeof(DATA));
+            hdc = GetDC(hwnd);
             CREATESTRUCT *myStruct = (CREATESTRUCT *) lParam;
             FILE *myFile = (FILE *) fopen((char *) myStruct->lpCreateParams, "rb");
             if (myFile == NULL)
@@ -129,77 +135,82 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             fileSize = ftell(myFile);
             fseek(myFile, 0, SEEK_SET);
             myData.text = (char *) malloc(fileSize * sizeof(char));
-
             if (myData.text == NULL) {
-
                 return 1;
             }
             fread(myData.text, sizeof(char), fileSize, myFile);
-            myData.text[fileSize - 1] = '\0';
-            int prevI=0;
+            myData.text[fileSize] = '\n';
+            int prevI = 0;
             myData.Size = fileSize;
-            myData.countStrings++;
-            for (int i=0; i<myData.Size; i++) {
-                if (myData.text[i] == '\n'){
+            for (int i = 0; i <= myData.Size; i++) {
+                if (myData.text[i] == '\n') {
                     myData.lenStings[myData.countStrings] = i - prevI;
                     myData.countStrings++;
-                    prevI=i;
+                    prevI = i;
                 }
             }
-//          std::cout<<myData.text[i];
             fclose(myFile);
-
-//            myData.maxRowLen = 10;
-            std::cerr<<"1";
-            for (int i=0; i<myData.Size; i++)
-                std::cout<<myData.text[i];
-            for (int i=0; i<myData.countStrings; i++)
-                std::cout<<myData.lenStings[i]<<std::endl;
+//            SetScrollRange(hwnd, SB_HORZ, 0,  myData.countStrings, true);
+//            SetScrollRange(hwnd, SB_VERT, 100, 200, true);
+            SetScrollRange(hwnd, SB_VERT, 0, myData.countStrings, FALSE);
+            SetScrollPos(hwnd, SB_VERT, iVscrollPos, TRUE);
+//            std::cerr<<"1";
+//            for (int i=0; i<myData.Size; i++)
+//                std::cout<<myData.text[i];
+//            for (int i=0; i<myData.countStrings; i++)
+//                std::cout<<myData.lenStings[i]<<std::endl;
 
         }
             break;
         case WM_PAINT: {
             hdc = BeginPaint(hwnd, &ps);
-            BeginPaint(hwnd,&ps);
-//            TextOut(hdc, 10, 40, myData.text,myData.Size);
+            BeginPaint(hwnd, &ps);
 
             char *buffer = (char *) malloc(sizeof(char) * myData.maxRowLen);
-//            char *buffer = (char *) malloc(sizeof(char) * 35);
-//            std::cerr<<myData.countStrings;
-            int num=0;
-            for (int i=0;i<myData.countStrings;i++){
-                for (int j=0;j<myData.lenStings[i];j++){
-                    buffer[j] = *(myData.text +num);
-                    std::cout<<buffer[j];
+            int num = 0;
+            for (int i = 0; i < myData.countStrings; i++) {
+                for (int j = 0; j < myData.lenStings[i]; j++) {
+                    buffer[j] = *(myData.text + num);
+//                    std::cout<<buffer[j];
                     num++;
                 }
-                std::cout<<std::endl;
-//                for ()
-                std::cerr<<std::endl<<myData.lenStings[i]<<" "<<i;
-                TextOut(hdc, 10 , -10 + 20 * i, buffer, myData.lenStings[i]);
+                TextOut(hdc, 10, 20*(1-iVscrollPos) + 20 * i, buffer, myData.lenStings[i]);
             }
-
-//            int i = 0;
-//
-//            while (i < myData.Size) {
-//                int j;
-//                for (j = 0; j < myData.maxRowLen;j++){ //&& *(myData.text + i + j) != '\n'; j++) {
-//                    buffer[j] = *(myData.text + i + j);
-//                }
-//                buffer[j] = '\0';
-//                std::cerr<<std::endl<<j<<" "<<i;
-//                TextOut(hdc, myData.Size, 40 + 20 * myData.countStrings, buffer, j + 1);
-//                i += j;
-//                myData.countStrings++;
-//            }
-            std::cerr<<std::endl<<myData.countStrings;
-//            HBRUSH brush = CreateSolidBrush(RGB(255, 0 ,0));
-            //SetTextAlign(hdc, TA_LEFT, TA_TOP);
+            delete buffer;
+//            std::cerr<<std::endl<<myData.countStrings;
             EndPaint(hwnd, &ps);
         }
             break;
+        case WM_VSCROLL :
+            switch (LOWORD(wParam)) {
+                case SB_LINEUP :
+                    iVscrollPos = std::max(0,iVscrollPos-1);
+                    break;
+                case SB_LINEDOWN :
+                    iVscrollPos = std::max(0,iVscrollPos+1);
+                    break;
+                case SB_PAGEUP :
+                    iVscrollPos = std::max(0,iVscrollPos-cyClient / cyChar);
+                    break;
+                case SB_PAGEDOWN :
+                    iVscrollPos = std::max(0,iVscrollPos+cyClient / cyChar);
+                    break;
+                case SB_THUMBPOSITION :
+                    iVscrollPos = HIWORD(wParam);
+                    break;
+                default :
+                    break;
+            }
+//            iVscrollPos = max(0, min(iVscrollPos, NUMLINES));
+            if (iVscrollPos != GetScrollPos(hwnd, SB_VERT)) {
+                SetScrollPos(hwnd, SB_VERT, iVscrollPos, TRUE);
+                InvalidateRect(hwnd, NULL, TRUE);
+            }
+            return 0;
         default:                      /* for messages that we don't deal with */
             return DefWindowProc(hwnd, message, wParam, lParam);
+
+
     }
 
 

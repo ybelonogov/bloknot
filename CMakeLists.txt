@@ -3,4 +3,4 @@ project(bloknot)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(bloknot main.cpp)
+add_executable(bloknot main.cpp forTabs.cpp forTabs.h)
